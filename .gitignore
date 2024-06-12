@@ -1,0 +1,14 @@
+# C++ compiled object files
+*.o
+
+# Executable files
+*.exe
+*.out
+
+# Compiled libraries
+*.a
+*.so
+
+# Build directories
+build/
+bin/
