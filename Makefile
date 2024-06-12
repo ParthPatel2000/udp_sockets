@@ -1,10 +1,8 @@
 # Compiler and flags
-CC := g++
+CXX := g++
 CFLAGS := -Wall -Wextra -std=c++11
 
-#build test executables
-.phony: all clean
-
+# Targets
 all: server client
 
 server: server.cpp
@@ -15,3 +13,5 @@ client: client.cpp
 
 clean:
 	rm -f server client
+
+remake: clean all
