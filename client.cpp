@@ -4,18 +4,19 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <server_ip> <server_port>" << std::endl;
-        return 1;
-    }
+    // if (argc < 3)
+    // {
+    //     std::cerr << "Usage: " << argv[0] << " <server_ip> <server_port>" << std::endl;
+    //     return 1;
+    // }
 
-    std::string server_ip = argv[1];
-    int server_port = std::stoi(argv[2]);
+    std::string server_ip = argc == 3 ? argv[1] : "0.0.0.0";
+    int server_port = argc == 3 ? std::stoi(argv[2]) : 50000;
 
     try
     {
         std::cout << "Connecting to server " << server_ip << " on port " << server_port << std::endl;
-        
+
         boost::asio::io_service io_service;
         boost::asio::ip::udp::socket socket(io_service, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), 0));
 
