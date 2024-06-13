@@ -6,6 +6,11 @@
 *.out
 
 # Compiled libraries
+server
+client
+game_server
+
+# Compiled libraries
 *.a
 *.so
 
