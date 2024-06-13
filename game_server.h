@@ -26,6 +26,7 @@ public:
 private:
     void start_receive();     // Start asynchronous receive
     void start_heartbeat();   // Start asynchronous heartbeat
+    void handle_receive(const boost::system::error_code& error, std::size_t bytes_transferred);
 };
 
 #endif // GAME_SERVER_H
