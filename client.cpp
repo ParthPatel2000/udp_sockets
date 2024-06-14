@@ -13,6 +13,8 @@ int main(int argc, char *argv[])
     int server_port = argc >= 3 ? std::stoi(argv[2]) : 50000;
     name = argc == 4 ? argv[3] : "Client";
 
+    std::string input_cin;
+
     try
     {
         std::cout << "Connecting to server " << server_ip << " on port " << server_port << std::endl;
@@ -32,13 +34,23 @@ int main(int argc, char *argv[])
 
         // Set up heartbeat timer
         boost::asio::steady_timer timer(io_service);
-        send_heartbeat(socket, server_endpoint, timer);
+
+        // Start sending the messages.
 
         std::thread io_thread([&io_service]()
                               { io_service.run(); });
 
         while (true)
         {
+            std::cout << "Enter the message to send to the server: ";
+            std::cin >> input_cin;
+            socket.async_send_to(boost::asio::buffer(input_cin), server_endpoint, [](const boost::system::error_code &ec, std::size_t bytes_sent)
+                                 {
+            if (ec)
+            {
+                std::cerr << "Error sending message: " << ec.message() << std::endl;
+            } });
+
             // Endpoint to store sender's information
             boost::asio::ip::udp::endpoint remote_endpoint;
             boost::system::error_code error;
