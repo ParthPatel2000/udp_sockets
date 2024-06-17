@@ -31,7 +31,6 @@ public:
 private:
     void start_receive();     // Start asynchronous receive
     void start_heartbeat();   // Start asynchronous heartbeat
-    void handle_receive(const boost::system::error_code& error, std::size_t bytes_transferred);
     void async_send(const std::string& message, const boost::asio::ip::udp::endpoint& endpoint);
     void disconnect_inactive_clients();
 };

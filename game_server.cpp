@@ -33,40 +33,43 @@ void GameServer::start_receive()
         boost::asio::buffer(buffer), remote_endpoint,
         [this](boost::system::error_code ec, std::size_t bytes_recvd)
         {
-            handle_receive(ec, bytes_recvd);
+            if (!ec && bytes_recvd > 0)
+            {
+                // client_key is the IP address and port of the client
+                std::string client_key = remote_endpoint.address().to_string() + ":" + std::to_string(remote_endpoint.port());
+
+                // If the client is not in the list of clients, add it and send the new client ack message
+                if (clients.find(client_key) == clients.end())
+                {
+                    // Add the client to the list of clients
+                    clients[client_key] = remote_endpoint;
+                    // Record the time of the last response from the client
+                    client_last_response[client_key] = std::chrono::steady_clock::now();
+                    std::string message = "Connection established. Welcome!";
+                    // Send the new client an ack message
+                    socket.send_to(boost::asio::buffer(message), remote_endpoint);
+                }
+                // Print the received message and the sender's IP address
+                std::cout << "Received from " << remote_endpoint.address().to_string() << ": " << std::string(buffer, bytes_recvd) << std::endl;
+                // Record the time of the last response from the client
+                client_last_response[client_key] = std::chrono::steady_clock::now();
+            }
+            else
+            {
+                if (ec)
+                {
+                    std::cerr << "Receive error: " << ec.message() << std::endl;
+                }
+            }
             start_receive(); // Reschedule the receive
         });
 }
 
-void GameServer::handle_receive(const boost::system::error_code &error, std::size_t bytes_transferred)
-{
-    if (!error && bytes_transferred > 0)
-    {
-        // client_key is the IP address and port of the client
-        std::string client_key = remote_endpoint.address().to_string() + ":" + std::to_string(remote_endpoint.port());
-
-        // If the client is not in the list of clients, add it and send the new client ack message
-        if (clients.find(client_key) == clients.end())
-        {
-            // Add the client to the list of clients
-            clients[client_key] = remote_endpoint;
-            // Record the time of the last response from the client
-            client_last_response[client_key] = std::chrono::steady_clock::now();
-            std::string message = "Connection established. Welcome!";
-            // Send the new client an ack message
-            socket.send_to(boost::asio::buffer(message), remote_endpoint);
-        }
-        // Print the received message and the sender's IP address
-        std::cout << "Received from " << remote_endpoint.address().to_string() << ": " << std::string(buffer, bytes_transferred) << std::endl;
-        // Record the time of the last response from the client
-        client_last_response[client_key] = std::chrono::steady_clock::now();
-    }
-}
 
 void GameServer::async_send(const std::string &message, const boost::asio::ip::udp::endpoint &endpoint)
 {
     socket.async_send_to(boost::asio::buffer(message), endpoint,
-                         [](const boost::system::error_code &ec, std::size_t bytes_sent)
+                         [](const boost::system::error_code &ec, std::size_t /*bytes_sent*/)
                          {
                              if (ec)
                              {
@@ -105,6 +108,10 @@ void GameServer::disconnect_inactive_clients()
                 }
             }
             disconnect_inactive_clients(); // Reschedule the disconnect timer
+        }
+        else
+        {
+            std::cerr << "Disconnect timer error: " << ec.message() << std::endl;
         } });
 }
 
@@ -117,6 +124,10 @@ void GameServer::start_heartbeat()
         {
             send_heartbeat();
             start_heartbeat();  // Reschedule the heartbeat
+        }
+        else
+        {
+            std::cerr << "Heartbeat timer error: " << ec.message() << std::endl;
         } });
 }
 
