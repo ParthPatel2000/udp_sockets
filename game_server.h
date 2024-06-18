@@ -13,6 +13,7 @@ class GameServer
 {
 private:
     int port = 50000;
+    int mtu = 1024; // Maximum Transmission Unit
     int disconnect_timeout = 10; // Timeout in seconds  to disconnect inactive clients
     boost::asio::io_service io_service;
     boost::asio::ip::udp::socket socket;

@@ -2,33 +2,48 @@
 #define PACKETS_H
 
 #include <string>
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <cstring>
+#include <iomanip>
+#include <unordered_map>
 
+/*TODO: ADD different packets for different types of messages
+        Add the different Constructors for the different types of packets so that the user can create the packets easily
+        also add functionalities for fragmentation and reassembly of packets as per the size of the message
+
+        Message Types:  1 - ack
+                        2 - chat
+                        3 - join
+                        4 - cards
+                        5 - game_state_update
+
+*/
 // Example packet structures
-struct PacketHeader
-{
-    uint16_t type;       // Packet type identifier
-    uint16_t length;     // Length of the packet data
-    uint16_t sequence;   // Sequence number
-    uint16_t message_id; // Message ID
-};
 
-struct ChatMessagePacket
+class Packets
 {
-    PacketHeader header;
-    std::string message;
-};
+private:
+    std::unordered_map<uint16_t, std::string> packet_buffer;
+    uint16_t packet_id = 0;
+    uint16_t MTU = 1500;
 
-struct ackPacket
-{
-    PacketHeader header;
-    uint16_t ack; // The message ID of the message being acknowledged
-};
+    void increment_packet_id();
+    std::string Packets::create_packet(std::vector<std::string> message_JSON);
+    std::vector<std::string> fragment_packet(const std::string &message);
+    std::string header_JSON(uint16_t size, uint16_t type, uint16_t fragments = 0, uint16_t fragment_seq = 0);
+    std::string message_JSON(const std::string &message);
+    std::string get_ack_JSON(uint16_t client_message_id);
 
-struct PlayerMovePacket
-{
-    PacketHeader header;
-    // TODO: Add THE PLAYER CARD SELECTED
-};
+public:
+    Packets(uint16_t mtu = 1500) : MTU(mtu){};
+    ~Packets() = default;
 
+    std::vector<std::string> get_packets(uint8_t packetType, const std::string &message);
+    void remove_packet(uint16_t id);
+    std::string fetch_packet(uint16_t id);
+};
 
 #endif // PACKETS_H
