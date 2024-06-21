@@ -1,5 +1,6 @@
 #include "game_server.h"
 
+
 // TODO: While writing the client make sure to also implement timeout from the client side for non responsive server situation
 
 GameServer::GameServer(int port)
@@ -50,7 +51,18 @@ void GameServer::start_receive()
                     socket.send_to(boost::asio::buffer(message), remote_endpoint);
                 }
                 // Print the received message and the sender's IP address
-                std::cout << "Received from " << remote_endpoint.address().to_string() << ": " << std::string(buffer, bytes_recvd) << std::endl;
+                std::string response(buffer, bytes_recvd);
+                std::cout << "Received from " << remote_endpoint.address().to_string() << ": " << response << std::endl;
+
+                // Parse the received message into json
+                doc = parser.parse(response);
+                
+                //extract the packet id from the received message and send ack for it.
+                auto header = doc["header"];
+                int64_t packet_id = header["id"];
+                
+                send_ack((uint16_t)packet_id, remote_endpoint);
+
                 // Record the time of the last response from the client
                 client_last_response[client_key] = std::chrono::steady_clock::now();
             }
@@ -76,6 +88,12 @@ void GameServer::async_send(const std::string &message, const boost::asio::ip::u
                                  std::cerr << "Error sending message: " << ec.message() << std::endl;
                              }
                          });
+}
+
+void GameServer::send_ack(uint16_t client_message_id, const boost::asio::ip::udp::endpoint &endpoint)
+{
+    std::string ack_message = packets_util.get_ack_JSON(client_message_id);
+    async_send(ack_message, endpoint);
 }
 
 /**

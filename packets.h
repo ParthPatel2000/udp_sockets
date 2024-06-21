@@ -25,22 +25,36 @@
 
 class Packets
 {
+
 private:
     std::unordered_map<uint16_t, std::string> packet_buffer;
     uint16_t packet_id = 0;
     uint16_t MTU = 1500;
+    uint16_t MAX_HEADER_SIZE = 225;
+    uint16_t game_id = 1;
 
     void increment_packet_id();
-    std::string Packets::create_packet(std::vector<std::string> message_JSON);
+    std::string create_packet(std::vector<std::string> message_JSON);
     std::vector<std::string> fragment_packet(const std::string &message);
-    std::string header_JSON(uint16_t size, uint16_t type, uint16_t fragments = 0, uint16_t fragment_seq = 0);
+    std::string get_header_JSON(
+        uint16_t size,
+        uint16_t type,
+        uint16_t fragments = 0,
+        uint16_t fragment_seq = 0,
+        uint32_t timestamp = 0,
+        uint32_t player_id = 0,
+        uint32_t game_id = 0,
+        uint32_t session_id = 0,
+        uint32_t checksum = 0,
+        uint8_t priority = 0,
+        uint32_t sequence_number = 0);
     std::string message_JSON(const std::string &message);
-    std::string get_ack_JSON(uint16_t client_message_id);
 
 public:
-    Packets(uint16_t mtu = 1500) : MTU(mtu){};
+    Packets() = default;
+    Packets(uint16_t mtu, uint16_t game_id) : MTU(mtu), game_id(game_id){};
     ~Packets() = default;
-
+    std::string get_ack_JSON(uint16_t client_message_id);
     std::vector<std::string> get_packets(uint8_t packetType, const std::string &message);
     void remove_packet(uint16_t id);
     std::string fetch_packet(uint16_t id);

@@ -2,6 +2,8 @@
 #include <string>
 #include <boost/asio.hpp>
 #include <thread>
+#include <simdjson.h>
+#include "packets.h"
 
 std::string name = "Client";
 
@@ -13,7 +15,8 @@ int main(int argc, char *argv[])
     int server_port = argc >= 3 ? std::stoi(argv[2]) : 50000;
     name = argc == 4 ? argv[3] : "Client";
 
-    std::string input_cin;
+    std::string packet;
+    Packets packets_util = Packets(1500, 10);
 
     try
     {
@@ -26,8 +29,10 @@ int main(int argc, char *argv[])
         boost::asio::ip::udp::endpoint server_endpoint(boost::asio::ip::address::from_string(server_ip), server_port);
 
         // Send initial message to server to register
-        std::string initial_message = "Hello server";
-        socket.send_to(boost::asio::buffer(initial_message), server_endpoint);
+        std::string initial_message = "Hello server I'm new here!";
+        packet = packets_util.get_packets(2, initial_message)[0];
+        // std::cout << "Message: " << packet << std::endl;
+        socket.send_to(boost::asio::buffer(packet), server_endpoint);
 
         // Buffer to store incoming data
         char buffer[1024];
@@ -42,9 +47,9 @@ int main(int argc, char *argv[])
 
         while (true)
         {
-            std::cout << "Enter the message to send to the server: ";
-            std::cin >> input_cin;
-            socket.async_send_to(boost::asio::buffer(input_cin), server_endpoint, [](const boost::system::error_code &ec, std::size_t bytes_sent)
+            packet = packets_util.get_packets(2, "Hey Server ")[0];
+            // std::cout << "Message: " << packet << std::endl;
+            socket.async_send_to(boost::asio::buffer(packet), server_endpoint, [](const boost::system::error_code &ec, std::size_t bytes_sent)
                                  {
             if (ec)
             {
@@ -65,6 +70,7 @@ int main(int argc, char *argv[])
 
             // Print the received message
             std::cout << "Received from " << remote_endpoint.address().to_string() << ": " << std::string(buffer, len) << std::endl;
+            sleep(1);
         }
 
         io_thread.join();
